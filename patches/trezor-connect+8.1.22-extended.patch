@@ -1,0 +1,24 @@
+diff --git a/node_modules/trezor-connect/lib/typescript/account.d.ts b/node_modules/trezor-connect/lib/typescript/account.d.ts
+index 9902301..e488b68 100644
+--- a/node_modules/trezor-connect/lib/typescript/account.d.ts
++++ b/node_modules/trezor-connect/lib/typescript/account.d.ts
+@@ -100,6 +100,7 @@ export interface AccountTransaction {
+         gasLimit: number;
+         gasUsed?: number;
+         gasPrice: string;
++        data?: string;
+     };
+     details: {
+         vin: VinVout[];
+diff --git a/node_modules/trezor-connect/lib/typescript/backend/blockchain.d.ts b/node_modules/trezor-connect/lib/typescript/backend/blockchain.d.ts
+index 185a748..b44eb62 100644
+--- a/node_modules/trezor-connect/lib/typescript/backend/blockchain.d.ts
++++ b/node_modules/trezor-connect/lib/typescript/backend/blockchain.d.ts
+@@ -76,6 +76,7 @@ export interface BlockchainEstimateFee {
+             data?: string;
+             from?: string;
+             to?: string;
++            value?: string;
+             txsize?: number;
+         };
+         feeLevels?: 'preloaded' | 'smart';

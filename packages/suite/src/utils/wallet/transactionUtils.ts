@@ -1,5 +1,6 @@
 import BigNumber from 'bignumber.js';
 import { AccountTransaction, AccountAddress } from 'trezor-connect';
+import { fromWei } from 'web3-utils';
 import { Account, WalletAccountTransaction, RbfTransactionParams } from '@wallet-types';
 import { AccountMetadata } from '@suite-types/metadata';
 import { getDateWithTimeZone } from '../suite/date';
@@ -307,7 +308,51 @@ export const getFeeRate = (tx: AccountTransaction, decimals?: number) => {
     return new BigNumber(fee).div(tx.details.size).integerValue(BigNumber.ROUND_CEIL).toString();
 };
 
-export const getRbfParams = (
+const getEthereumRbfParams = (
+    tx: AccountTransaction,
+    account: Account,
+): RbfTransactionParams | undefined => {
+    if (account.networkType !== 'ethereum') return;
+    if (tx.type === 'recv' || !tx.ethereumSpecific || !tx.details || !isPending(tx)) return; // ignore non rbf and mined transactions
+
+    const { vout } = tx.details;
+    const token = tx.tokens[0];
+
+    const output = token
+        ? {
+              address: token.to!,
+              token: token.address,
+              amount: token.amount,
+              formattedAmount: formatAmount(token.amount, token.decimals),
+          }
+        : {
+              address: vout[0].addresses![0],
+              amount: vout[0].value!,
+              formattedAmount: formatNetworkAmount(vout[0].value!, account.symbol),
+          };
+
+    const ethereumData =
+        tx.ethereumSpecific.data && tx.ethereumSpecific.data.indexOf('0x') === 0
+            ? tx.ethereumSpecific.data.substring(2)
+            : '';
+
+    return {
+        txid: tx.txid,
+        utxo: [], // irrelevant
+        outputs: [
+            {
+                type: 'payment',
+                ...output,
+            },
+        ],
+        ethereumNonce: tx.ethereumSpecific.nonce,
+        ethereumData,
+        feeRate: fromWei(tx.ethereumSpecific.gasPrice, 'gwei'),
+        baseFee: 0,
+    };
+};
+
+const getBitcoinRbfParams = (
     tx: AccountTransaction,
     account: Account,
 ): RbfTransactionParams | undefined => {
@@ -369,6 +414,13 @@ export const getRbfParams = (
     };
 };
 
+export const getRbfParams = (
+    tx: AccountTransaction,
+    account: Account,
+): WalletAccountTransaction['rbfParams'] => {
+    return getBitcoinRbfParams(tx, account) || getEthereumRbfParams(tx, account);
+};
+
 /**
  * Formats amounts and attaches fields from the account (descriptor, deviceState, symbol) to the tx object
  *
@@ -408,6 +460,12 @@ export const enhanceTransaction = (
             return tr;
         }),
         rbfParams: getRbfParams(tx, account),
+        ethereumSpecific: tx.ethereumSpecific
+            ? {
+                  ...tx.ethereumSpecific,
+                  gasPrice: fromWei(tx.ethereumSpecific.gasPrice, 'gwei'),
+              }
+            : undefined,
     };
 };
 

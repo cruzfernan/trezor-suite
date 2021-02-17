@@ -307,6 +307,40 @@ const BasicDetails = ({ tx, confirmations, network, isFetching }: Props) => {
                         </Value>
                     </>
                 )}
+
+                {/* Ethereum */}
+                {tx.ethereumSpecific && (
+                    <>
+                        <Title>
+                            <StyledIcon icon="GAS" size={10} />
+                            <Translation id="TR_GAS_LIMIT" />
+                        </Title>
+                        <Value>{tx.ethereumSpecific.gasLimit}</Value>
+                        <Title>
+                            <StyledIcon icon="GAS" size={10} />
+                            <Translation id="TR_GAS_USED" />
+                        </Title>
+                        <Value>
+                            {tx.ethereumSpecific.gasUsed ? (
+                                tx.ethereumSpecific.gasUsed
+                            ) : (
+                                <Translation id="TR_UNKNOWN" />
+                            )}
+                        </Value>
+                        <Title>
+                            <StyledIcon icon="GAS" size={10} />
+                            <Translation id="TR_GAS_PRICE" />
+                        </Title>
+                        <Value>{`${tx.ethereumSpecific.gasPrice} ${getFeeUnits(
+                            'ethereum',
+                        )}`}</Value>
+                        <Title>
+                            <StyledIcon icon="GAS" size={10} />
+                            <Translation id="TR_NONCE" />
+                        </Title>
+                        <Value>{tx.ethereumSpecific.nonce}</Value>
+                    </>
+                )}
             </Grid>
         </Wrapper>
     );

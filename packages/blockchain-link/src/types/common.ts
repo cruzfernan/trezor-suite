@@ -60,6 +60,7 @@ export interface Transaction {
     blockHeight?: number;
     blockHash?: string;
 
+    totalSpent: string;
     amount: string;
     fee: string;
     // total: string, // amount + total

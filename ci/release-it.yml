@@ -1,0 +1,20 @@
+github:
+    release: true
+    draft: true
+    releaseName: "v${version}"
+    releaseNotes: node ./ci/scripts/fetch_changelog.js
+    assets:
+        - "*.AppImage"
+        - "*.dmg"
+        - "*.exe"
+        - "latest.yml"
+        - "latest-mac.yml"
+        - "latest-linux.yml"
+        - "latest-linux-arm64.yml"
+git:
+    requireCommits: true
+    tag: false
+    commit: false
+    push: false
+npm:
+    publish: false

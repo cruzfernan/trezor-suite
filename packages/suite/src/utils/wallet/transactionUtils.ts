@@ -265,14 +265,28 @@ export const analyzeTransactions = (
     });
 };
 
-export const getTxOperation = (transaction: WalletAccountTransaction) => {
-    if (transaction.type === 'sent' || transaction.type === 'self') {
+export const getTxOperation = (tx: WalletAccountTransaction) => {
+    if (tx.type === 'sent' || tx.type === 'self' || tx.type === 'failed') {
         return 'neg';
     }
-    if (transaction.type === 'recv') {
+    if (tx.type === 'recv') {
         return 'pos';
     }
     return null;
+};
+
+export const getTxIcon = (txType: WalletAccountTransaction['type']) => {
+    switch (txType) {
+        case 'recv':
+            return 'RECEIVE';
+        case 'sent':
+        case 'self':
+            return 'SEND';
+        case 'failed':
+            return 'CANCEL';
+        default:
+            return 'QUESTION';
+    }
 };
 
 export const getTargetAmount = (
@@ -300,6 +314,10 @@ export const isTxUnknown = (transaction: WalletAccountTransaction) => {
         (!isTokenTransaction && !transaction.targets.find(t => t.addresses)) ||
         transaction.type === 'unknown'
     );
+};
+
+export const isTxFailed = (tx: AccountTransaction | WalletAccountTransaction) => {
+    return !isPending(tx) && tx.ethereumSpecific?.status === 0;
 };
 
 export const getFeeRate = (tx: AccountTransaction, decimals?: number) => {
@@ -421,6 +439,20 @@ export const getRbfParams = (
     return getBitcoinRbfParams(tx, account) || getEthereumRbfParams(tx, account);
 };
 
+const enhanceFailedTransaction = (
+    tx: AccountTransaction,
+    _account: Account,
+): AccountTransaction => {
+    if (!isTxFailed(tx)) return tx;
+    // const address = tx.targets[0].addresses![0];
+    // TODO: find failed token in account.tokens list?
+    // TODO: try to parse smart contract data to get values (destination, amount..)
+    return {
+        ...tx,
+        type: 'failed',
+    };
+};
+
 /**
  * Formats amounts and attaches fields from the account (descriptor, deviceState, symbol) to the tx object
  *
@@ -429,9 +461,10 @@ export const getRbfParams = (
  * @returns {WalletAccountTransaction}
  */
 export const enhanceTransaction = (
-    tx: AccountTransaction,
+    origTx: AccountTransaction,
     account: Account,
 ): WalletAccountTransaction => {
+    const tx = enhanceFailedTransaction(origTx, account);
     return {
         descriptor: account.descriptor,
         deviceState: account.deviceState,

@@ -1,7 +1,16 @@
 diff --git a/node_modules/trezor-connect/lib/typescript/account.d.ts b/node_modules/trezor-connect/lib/typescript/account.d.ts
-index 9902301..e488b68 100644
+index 9902301..70c0ed1 100644
 --- a/node_modules/trezor-connect/lib/typescript/account.d.ts
 +++ b/node_modules/trezor-connect/lib/typescript/account.d.ts
+@@ -80,7 +80,7 @@ export interface TransactionTarget {
+ }
+ 
+ export interface AccountTransaction {
+-    type: 'sent' | 'recv' | 'self' | 'unknown';
++    type: 'sent' | 'recv' | 'self' | 'failed' | 'unknown';
+ 
+     txid: string;
+     blockTime?: number;
 @@ -100,6 +100,7 @@ export interface AccountTransaction {
          gasLimit: number;
          gasUsed?: number;

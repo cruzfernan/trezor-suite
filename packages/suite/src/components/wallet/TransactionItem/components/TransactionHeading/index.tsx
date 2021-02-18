@@ -77,7 +77,7 @@ const TransactionHeading = ({
 
     if (useSingleRowLayout) {
         const targetAmount = !isTokenTransaction
-            ? getTargetAmount(target, transaction)
+            ? getTargetAmount(target, transaction) // this is kinda weird @slowbackspace
             : transfer.amount;
         const operation = getTxOperation(transaction);
         amount = (
@@ -88,6 +88,17 @@ const TransactionHeading = ({
                         {targetAmount} {symbol}
                     </StyledHiddenPlaceholder>
                 )}
+            </CryptoAmount>
+        );
+    }
+
+    if (transaction.type === 'failed') {
+        amount = (
+            <CryptoAmount>
+                <StyledHiddenPlaceholder>
+                    <Sign value="neg" />
+                    {transaction.fee} {symbol}
+                </StyledHiddenPlaceholder>
             </CryptoAmount>
         );
     }
@@ -104,6 +115,8 @@ const TransactionHeading = ({
         heading = isPending ? `Receiving ${symbol}` : `Received ${symbol}`;
     } else if (transaction.type === 'self') {
         heading = isPending ? `Sending ${symbol} to myself` : `Sent ${symbol} to myself`;
+    } else if (transaction.type === 'failed') {
+        heading = 'Failed transaction';
     } else {
         heading = <Translation id="TR_UNKNOWN_TRANSACTION" />;
     }

@@ -9,7 +9,12 @@ import {
 } from '@suite-components';
 import { getDateWithTimeZone } from '@suite-utils/date';
 import { WalletAccountTransaction, Network } from '@wallet-types';
-import { getFeeRate, getBlockExplorerUrl, isTxFinal } from '@wallet-utils/transactionUtils';
+import {
+    getFeeRate,
+    getBlockExplorerUrl,
+    isTxFinal,
+    getTxIcon,
+} from '@wallet-utils/transactionUtils';
 import { getFeeUnits } from '@wallet-utils/sendFormUtils';
 
 const Wrapper = styled.div`
@@ -178,6 +183,8 @@ const getHumanReadableTxType = (tx: WalletAccountTransaction) => {
             return <Translation id="TR_RECEIVED" />;
         case 'self':
             return <Translation id="TR_SENT_TO_SELF" />;
+        case 'failed':
+            return 'Failed transaction';
         case 'unknown':
             return <Translation id="TR_UNKNOWN" />;
         default:
@@ -200,11 +207,7 @@ const BasicDetails = ({ tx, confirmations, network, isFetching }: Props) => {
                 <MainIconWrapper>
                     <CoinLogo symbol={tx.symbol} size={48} />
                     <NestedIconWrapper>
-                        <Icon
-                            size={14}
-                            color={theme.TYPE_DARK_GREY}
-                            icon={tx.type === 'recv' ? 'RECEIVE' : 'SEND'}
-                        />
+                        <Icon size={14} color={theme.TYPE_DARK_GREY} icon={getTxIcon(tx.type)} />
                     </NestedIconWrapper>
                 </MainIconWrapper>
                 <TxStatus>

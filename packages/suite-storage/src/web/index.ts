@@ -26,15 +26,20 @@ class CommonDB<TDBStructure> {
     version!: number;
     db!: IDBPDatabase<TDBStructure> | null;
     broadcastChannel!: BroadcastChannel;
+    supported: boolean | undefined;
+    blocking = false;
     onUpgrade!: OnUpgradeFunc<TDBStructure>;
     onDowngrade!: () => any;
-    supported: boolean | undefined;
+    onBlocked?: () => void;
+    onBlocking?: () => void;
 
     constructor(
         dbName: string,
         version: number,
         onUpgrade: OnUpgradeFunc<TDBStructure>,
-        onDowngrade: () => any
+        onDowngrade: () => any,
+        onBlocked?: () => void,
+        onBlocking?: () => void
     ) {
         if (CommonDB.instance) {
             return CommonDB.instance;
@@ -45,7 +50,10 @@ class CommonDB<TDBStructure> {
         this.supported = undefined;
         this.onUpgrade = onUpgrade.bind(this);
         this.onDowngrade = onDowngrade.bind(this);
+        this.onBlocked = onBlocked;
+        this.onBlocking = onBlocking;
         this.db = null;
+        this.blocking = false;
 
         this.isSupported();
 
@@ -112,21 +120,30 @@ class CommonDB<TDBStructure> {
                     },
                     blocked: () => {
                         // Called if there are older versions of the database open on the origin, so this version cannot open.
-                        // TODO
-                        console.log(
-                            'Accessing the IDB is blocked by another window running older version.'
-                        );
+                        if (this.onBlocked) {
+                            this.onBlocked();
+                        }
                     },
                     blocking: () => {
                         // Called if this connection is blocking a future version of the database from opening.
-                        // TODO
-                        console.log('This instance is blocking the IDB upgrade to new version.');
+                        this.blocking = true;
+                        if (this.onBlocking) {
+                            this.onBlocking();
+                        }
+                        // wait 1 sec before closing the db to let app enough time to finish all requests
+                        setTimeout(() => {
+                            this.db?.close();
+                        }, 1000);
+                    },
+                    terminated: () => {
+                        // browser killed idb, user cleared history
+                        console.warn('Unexpected IDB close');
                     },
                 });
             } catch (error) {
                 if (error && error.name === 'VersionError') {
                     indexedDB.deleteDatabase(this.dbName);
-                    console.log(
+                    console.warn(
                         'IndexedDB was deleted because your version is higher than it should be (downgrade)'
                     );
                     this.onDowngrade();
